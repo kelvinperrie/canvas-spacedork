@@ -83,6 +83,7 @@ $(document).ready(function () {
         self.lastProductionTime = new Date().getTime();
         self.productionRate = setup.productionRate;
         self.producedOrbiterAdjustments = setup.producedOrbiterAdjustments || [];
+        self.visited = setup.visited || false;
 
         self.CombatPower = function () {
             var power = 0;
@@ -139,15 +140,19 @@ $(document).ready(function () {
             ctx.restore();
 
             ctx.save();
-            ctx.translate(0, 20);
-            ctx.textAlign = "center";
-            ctx.strokeText(self.name, 0, 0); // + "(" + self.ownerPlayerId + ")", 0, 0);
+            if (self.visited) {
+                ctx.translate(0, 20);
+                ctx.textAlign = "center";
+                ctx.strokeText(self.name, 0, 0); // + "(" + self.ownerPlayerId + ")", 0, 0);
+            }
             ctx.restore();
 
             ctx.save();
-            ctx.translate(0, -15);
-            ctx.textAlign = "center";
-            ctx.strokeText(self.orbiters.length, 0, 0);
+            if (self.visited) {
+                ctx.translate(0, -15);
+                ctx.textAlign = "center";
+                ctx.strokeText(self.orbiters.length, 0, 0);
+            }
             ctx.restore();
 
             ctx.restore();
@@ -215,6 +220,8 @@ $(document).ready(function () {
         self.Loop();
 
         self.MoverArrivedAtTarget = function (arrivedMover, target) {
+            // mark this producer as having been visited
+            target.visited = true;
             if (arrivedMover.ownerPlayerId === target.ownerPlayerId) {
                 // add the arrivals to the existing orbiters
                 console.log("adding " + arrivedMover.orbiters.length + " orbiters to " + target.name + " which has " + target.orbiters.length);
@@ -284,14 +291,18 @@ $(document).ready(function () {
             if (producer === self.showingHoverForProducer) return;
             console.log("setting new hover");
             self.showingHoverForProducer = producer;
-            var html = "<div class='producer-name'>" + producer.name + "</div>";
-            html = html + "<div>Production rate => " + producer.productionRate + "</div>";
-            if (producer.producedOrbiterAdjustments.length > 0) {
-                html = html + "<div>Production combat bonuses:</div>";
-            }
-            for (var i = 0; i < producer.producedOrbiterAdjustments.length; i++) {
-                var adjustment = producer.producedOrbiterAdjustments[i];
-                html = html + "<div>" + adjustment.name + " => " + adjustment.value + "</div>";
+            var producerName = producer.visited ? producer.name : "???";
+            var producerRate = producer.visited ? producer.productionRate : "???";
+            var html = "<div class='producer-name'>" + producerName + "</div>";
+            html = html + "<div>Production rate => " + producerRate + "</div>";
+            if (producer.visited) {
+                if (producer.producedOrbiterAdjustments.length > 0) {
+                    html = html + "<div>Production combat bonuses:</div>";
+                }
+                for (var i = 0; i < producer.producedOrbiterAdjustments.length; i++) {
+                    var adjustment = producer.producedOrbiterAdjustments[i];
+                    html = html + "<div>" + adjustment.name + " => " + adjustment.value + "</div>";
+                }
             }
             $('.producer-hover-info').html(html);
             $('.producer-hover-info').css({ top: producer.y - 15, left: producer.x + 15 });
@@ -366,10 +377,10 @@ $(document).ready(function () {
 
         var player1 = new player({});
         self.players.push(player1);
-        self.producers.push(new producer({ producerName: "Earth", x: 100, y: 100, image: 'planet1.png', productionRate: 5000, ownerPlayer: player1, ownerPlayerId: 1, initialOrbiterCount: 3, producedOrbiterAdjustments: [{name: 'Cool paint job', value: 1.5}] }));
-        self.producers.push(new producer({ producerName: "Mars", x: 200, y: 150, image: 'planet2.png', productionRate: 7000, initialOrbiterCount: 3 }));
+        self.producers.push(new producer({ producerName: "Earth", x: 100, y: 100, image: 'planet1.png', productionRate: 5000, ownerPlayer: player1, ownerPlayerId: 1, visited: true, initialOrbiterCount: 3, producedOrbiterAdjustments: [{name: 'Cool paint job', value: 1.5}] }));
+        self.producers.push(new producer({ producerName: "Mars", x: 200, y: 150, image: 'planet2.png', productionRate: 7000, visited: true, initialOrbiterCount: 3 }));
         self.producers.push(new producer({ producerName: "Bob", x: 300, y: 275, image: 'planet3.png', productionRate: 3000 }));
-        self.producers.push(new producer({ producerName: "Ugh", x: 300, y: 200, image: 'planet4.png', productionRate: 0, initialOrbiterCount: 2 }));
+        self.producers.push(new producer({ producerName: "Ugh", x: 300, y: 200, image: 'planet4.png', productionRate: 0, visited: true, initialOrbiterCount: 2 }));
         self.producers.push(new producer({ producerName: "Boomer", x: 450, y: 100, image: 'planet5.png', productionRate: 4000, initialOrbiterCount: 2 }));
         self.producers.push(new producer({ producerName: "Money Pit", x: 350, y: 300, image: 'planet6.png', productionRate: 6000, initialOrbiterCount: 1, producedOrbiterAdjustments: [{ name: 'Fancy lazyors', value: 1.6 }]  }));
         self.producers.push(new producer({ producerName: "FIJI!", x: 50, y: 270, image: 'planet7.png', productionRate: 6000, initialOrbiterCount: 2, producedOrbiterAdjustments: [{ name: 'Additonal sheilding', value: 1.2 }]  }));
